@@ -1,24 +1,7 @@
 lockfile_version: '1'
-generated_at: '2026-08-14T11:13:14.629388+00:00'
+generated_at: '2026-08-14T12:42:18.933812+00:00'
 apm_version: 0.28.0
-dependencies:
-- repo_url: anthropics/skills
-  name: frontend-design
-  host: github.com
-  resolved_commit: f6656c1256d5a8adfa37db9110046ef20bac644c
-  resolved_ref: f6656c1256d5a8adfa37db9110046ef20bac644c
-  version: unknown
-  virtual_path: skills/frontend-design
-  is_virtual: true
-  package_type: claude_skill
-  deployed_files:
-  - .claude/skills/frontend-design
-  - .claude/skills/frontend-design/LICENSE.txt
-  - .claude/skills/frontend-design/SKILL.md
-  deployed_file_hashes:
-    .claude/skills/frontend-design/LICENSE.txt: sha256:0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594
-    .claude/skills/frontend-design/SKILL.md: sha256:1608ea77fbb6fc30d13a97d12cfa8ebf31358d40f0dd97beed24829d6b3f45dd
-  content_hash: sha256:4eabc66183767153e404b39d1b839b1c37f2d82d86f0a0d7e880a579d8d62336
+dependencies: []
 deployments:
 - kind: project-relative
   target: claude
@@ -38,33 +21,6 @@ deployments:
   - .
   active_owner: .
   content_hash: sha256:cdc12b87243178bd84e4025160db5179cd0a5e2e68c33a58b1d183c0481acc9f
-- kind: project-relative
-  target: claude
-  value: .claude/skills/frontend-design
-  runtime: null
-  scope: project
-  owners:
-  - anthropics/skills/skills/frontend-design
-  active_owner: anthropics/skills/skills/frontend-design
-  content_hash: null
-- kind: project-relative
-  target: claude
-  value: .claude/skills/frontend-design/LICENSE.txt
-  runtime: null
-  scope: project
-  owners:
-  - anthropics/skills/skills/frontend-design
-  active_owner: anthropics/skills/skills/frontend-design
-  content_hash: sha256:0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594
-- kind: project-relative
-  target: claude
-  value: .claude/skills/frontend-design/SKILL.md
-  runtime: null
-  scope: project
-  owners:
-  - anthropics/skills/skills/frontend-design
-  active_owner: anthropics/skills/skills/frontend-design
-  content_hash: sha256:1608ea77fbb6fc30d13a97d12cfa8ebf31358d40f0dd97beed24829d6b3f45dd
 - kind: project-relative
   target: claude
   value: .claude/skills/skill-authoring
