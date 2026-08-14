@@ -1,0 +1,37 @@
+name: Validate skills
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# Template configuration (keep in sync with pages.yml)
+env:
+  SKILLS_DIR: .apm/skills
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install APM
+        run: |
+          curl -sSL https://aka.ms/apm-unix | sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Reproduce lockfile exactly
+        run: apm install --frozen
+
+      - name: Audit skills (hidden Unicode, drift, lockfile integrity)
+        run: apm audit --ci
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Build website index
+        run: node scripts/build-site.mjs
