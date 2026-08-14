@@ -264,10 +264,15 @@
 
     document.title = data.title;
     document.querySelector("header h1").textContent = data.title;
+    // The gh CLI only supports GitHub-hosted repos; on other hosts the
+    // build omits gh commands and the installer toggle is hidden.
+    const hasGh = Boolean(data.installAll.gh);
+    if (!hasGh) document.querySelector('[aria-label="Installer"]').hidden = true;
+
     const installAll = document.getElementById("install-all");
     installAll.dataset.apm = data.installAll.apm;
     installAll.dataset.apmSsh = data.installAll.apmSsh;
-    installAll.dataset.gh = data.installAll.gh;
+    if (hasGh) installAll.dataset.gh = data.installAll.gh;
     const repoLink = document.getElementById("repo-link");
     repoLink.href = data.repoUrl;
     repoLink.textContent = data.repo;
@@ -281,7 +286,7 @@
           <a class="source" href="${esc(s.source)}">view source</a>
         </div>
         <p>${esc(s.description)}</p>
-        <span class="cmd"><code data-apm="${esc(s.install.apm)}" data-apm-ssh="${esc(s.install.apmSsh)}" data-gh="${esc(s.install.gh)}"></code><button data-copy>Copy</button></span>
+        <span class="cmd"><code data-apm="${esc(s.install.apm)}" data-apm-ssh="${esc(s.install.apmSsh)}"${s.install.gh ? ` data-gh="${esc(s.install.gh)}"` : ""}></code><button data-copy>Copy</button></span>
       </li>`).join("");
 
     document.querySelectorAll("button[data-copy]").forEach(wireCopy);
@@ -290,7 +295,7 @@
     select.innerHTML = TARGETS.map((t) => `<option value="${t.apm}">${t.label}</option>`).join("");
 
     try {
-      if (localStorage.getItem("installer") === "gh") state.installer = "gh";
+      if (hasGh && localStorage.getItem("installer") === "gh") state.installer = "gh";
       if (localStorage.getItem("source") === "ssh") state.source = "ssh";
       const saved = localStorage.getItem("target") || "";
       if (TARGETS.some((t) => t.apm === saved)) state.target = saved;

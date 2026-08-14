@@ -15,24 +15,34 @@ const outDir = join(root, "_site");
 // SITE_TITLE: heading shown on the website.
 const SKILLS_DIR = (process.env.SKILLS_DIR || "skills").replace(/^\/+|\/+$/g, "");
 const SITE_TITLE = process.env.SITE_TITLE || "Skill Index";
-// Used when the repo has no GitHub remote yet (e.g. building right after
-// creating a repo from the template). CI and cloned repos derive the real slug.
-const FALLBACK_REPO = "OWNER/REPO";
+// Used when the repo has no remote yet (e.g. building right after creating
+// a repo from the template). CI and cloned repos derive the real host/slug.
+const FALLBACK = { host: "github.com", repo: "OWNER/REPO" };
 
 const skillsDir = join(root, SKILLS_DIR);
 
-function repoSlug() {
-	if (process.env.GITHUB_REPOSITORY) return process.env.GITHUB_REPOSITORY;
+// Detects the git host and repo slug from CI environments (GitHub Actions,
+// GitLab CI) or the origin remote, so the template works on any git host.
+function detectRepo() {
+	if (process.env.GITHUB_REPOSITORY) {
+		const host = (process.env.GITHUB_SERVER_URL || "https://github.com").replace(/^https?:\/\//, "");
+		return { host, repo: process.env.GITHUB_REPOSITORY };
+	}
+	if (process.env.CI_PROJECT_PATH) {
+		return { host: process.env.CI_SERVER_HOST || "gitlab.com", repo: process.env.CI_PROJECT_PATH };
+	}
 	try {
 		const url = execSync("git remote get-url origin", { cwd: root, stdio: ["ignore", "pipe", "ignore"] })
 			.toString()
 			.trim();
-		const m = url.match(/github\.com[/:]([^/]+\/[^/.]+)/);
-		if (m) return m[1];
+		// Handles https://host/owner/repo(.git), git@host:owner/repo(.git),
+		// and ssh://git@host/owner/repo(.git) on default ports.
+		const m = url.match(/^(?:https?:\/\/|ssh:\/\/)?(?:[^@/]+@)?([^/:]+)[/:](.+?)(?:\.git)?\/?$/);
+		if (m) return { host: m[1], repo: m[2] };
 	} catch {
 		// no remote configured yet
 	}
-	return FALLBACK_REPO;
+	return FALLBACK;
 }
 
 function parseFrontmatter(text) {
@@ -54,7 +64,16 @@ function firstParagraph(markdown) {
 	return "";
 }
 
-const repo = repoSlug();
+const { host, repo } = detectRepo();
+const isGitHub = host === "github.com";
+// APM's bare owner/repo shorthand is GitHub-only; other hosts use the
+// FQDN shorthand (host/owner/repo), which supports the same subpath syntax.
+const apmRef = isGitHub ? repo : `${host}/${repo}`;
+// Browse-URL layout differs per host; GitLab inserts /-/ before tree/.
+const treeBase = host.includes("gitlab")
+	? `https://${host}/${repo}/-/tree/main`
+	: `https://${host}/${repo}/tree/main`;
+
 const skills = [];
 
 if (existsSync(skillsDir)) {
@@ -67,13 +86,14 @@ if (existsSync(skillsDir)) {
 			name: attrs.name || entry.name,
 			description: attrs.description || firstParagraph(body),
 			install: {
-				apm: `apm install ${repo}/${SKILLS_DIR}/${entry.name}`,
+				apm: `apm install ${apmRef}/${SKILLS_DIR}/${entry.name}`,
 				// Single skills over SSH need the apm.yml object form; this
 				// snippet goes under dependencies.apm, followed by `apm install`.
-				apmSsh: `- git: git@github.com:${repo}.git\n  path: ${SKILLS_DIR}/${entry.name}`,
-				gh: `gh skill install ${repo} ${SKILLS_DIR}/${entry.name}`,
+				apmSsh: `- git: git@${host}:${repo}.git\n  path: ${SKILLS_DIR}/${entry.name}`,
+				// The gh CLI only supports GitHub-hosted repos.
+				...(isGitHub && { gh: `gh skill install ${repo} ${SKILLS_DIR}/${entry.name}` }),
 			},
-			source: `https://github.com/${repo}/tree/main/${SKILLS_DIR}/${entry.name}`,
+			source: `${treeBase}/${SKILLS_DIR}/${entry.name}`,
 		});
 	}
 }
@@ -87,13 +107,14 @@ writeFileSync(
 	JSON.stringify(
 		{
 			title: SITE_TITLE,
+			host,
 			repo,
-			repoUrl: `https://github.com/${repo}`,
+			repoUrl: `https://${host}/${repo}`,
 			skillsDir: SKILLS_DIR,
 			installAll: {
-				apm: `apm install ${repo}`,
-				apmSsh: `apm install git@github.com:${repo}.git`,
-				gh: `gh skill install ${repo} --all`,
+				apm: `apm install ${apmRef}`,
+				apmSsh: `apm install git@${host}:${repo}.git`,
+				...(isGitHub && { gh: `gh skill install ${repo} --all` }),
 			},
 			skills,
 		},
