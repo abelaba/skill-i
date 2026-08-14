@@ -122,7 +122,12 @@ async function externalSkill(spec) {
     description,
     origin: "external",
     originRepo: `${owner}/${repo}`,
-    install: `apm install ${spec}`,
+    install: {
+      apm: `apm install ${spec}`,
+      gh: subpath
+        ? `gh skill install ${owner}/${repo} ${subpath}${ref ? ` --pin ${ref}` : ""}`
+        : `gh skill install ${owner}/${repo} --all${ref ? ` --pin ${ref}` : ""}`,
+    },
     source: `https://github.com/${owner}/${repo}/tree/${treeRef}/${subpath}`.replace(/\/$/, ""),
   };
 }
@@ -141,7 +146,10 @@ if (existsSync(skillsDir)) {
       description: attrs.description || firstParagraph(body),
       origin: "local",
       originRepo: repo,
-      install: `apm install ${repo}/${SKILLS_DIR}/${entry.name}`,
+      install: {
+        apm: `apm install ${repo}/${SKILLS_DIR}/${entry.name}`,
+        gh: `gh skill install ${repo} ${SKILLS_DIR}/${entry.name}`,
+      },
       source: `https://github.com/${repo}/tree/main/${SKILLS_DIR}/${entry.name}`,
     });
   }
@@ -159,7 +167,10 @@ writeFileSync(
       title: SITE_TITLE,
       repo,
       repoUrl: `https://github.com/${repo}`,
-      installAll: `apm install ${repo}`,
+      installAll: {
+        apm: `apm install ${repo}`,
+        gh: `gh skill install ${repo} --all`,
+      },
       skills,
     },
     null,

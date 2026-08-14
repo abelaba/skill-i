@@ -48,7 +48,21 @@
     background: var(--surface);
     padding: 1.1rem 1.25rem;
   }
-  .setup h2 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.75rem; }
+  .setup h2 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+  .setup-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 0.75rem; }
+  .segmented { display: inline-flex; border: 1px solid var(--border); border-radius: 7px; overflow: hidden; }
+  .segmented button {
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    font-size: 0.78rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    padding: 0.3rem 0.8rem;
+    cursor: pointer;
+  }
+  .segmented button + button { border-left: 1px solid var(--border); }
+  .segmented button[aria-checked="true"] { background: var(--accent-soft); color: var(--accent); }
+  .setup .note { color: var(--muted); font-size: 0.82rem; margin-top: 0.75rem; }
   .step { display: flex; align-items: baseline; gap: 0.75rem; margin-top: 0.6rem; flex-wrap: wrap; }
   .step .label { color: var(--muted); font-size: 0.85rem; min-width: 11rem; }
 
@@ -130,18 +144,28 @@
   </header>
 
   <section class="setup">
-    <h2>Getting started</h2>
+    <div class="setup-head">
+      <h2>Getting started</h2>
+      <div class="segmented" role="radiogroup" aria-label="Installer">
+        <button data-installer="apm" role="radio">apm</button>
+        <button data-installer="gh" role="radio">gh CLI</button>
+      </div>
+    </div>
     <div class="step">
-      <span class="label">1. Install APM</span>
-      <span class="cmd"><code>curl -sSL https://aka.ms/apm-unix | sh</code><button data-copy>Copy</button></span>
+      <span class="label" id="tool-label">1. Install APM</span>
+      <span class="cmd"><code id="tool-install"
+        data-apm="curl -sSL https://aka.ms/apm-unix | sh"
+        data-gh="brew install gh"></code><button data-copy>Copy</button></span>
     </div>
     <div class="step">
       <span class="label">2. Install every skill</span>
-      <span class="cmd"><code id="install-all"></code><button data-copy>Copy</button></span>
+      <span class="cmd"><code id="install-all" data-install></code><button data-copy>Copy</button></span>
     </div>
     <div class="step">
       <span class="label">or pick one below</span>
     </div>
+    <p class="note" id="gh-note" hidden>The GitHub CLI installs the skills hosted in this
+    repository; skills referenced from other repositories install individually below.</p>
   </section>
 
   <div class="toolbar">
@@ -174,12 +198,27 @@
     });
   }
 
+  function applyInstaller(installer) {
+    for (const code of document.querySelectorAll("code[data-apm]")) {
+      code.textContent = code.dataset[installer];
+    }
+    for (const button of document.querySelectorAll(".segmented button")) {
+      button.setAttribute("aria-checked", String(button.dataset.installer === installer));
+    }
+    document.getElementById("tool-label").textContent =
+      installer === "apm" ? "1. Install APM" : "1. Install the GitHub CLI";
+    document.getElementById("gh-note").hidden = installer !== "gh";
+    try { localStorage.setItem("installer", installer); } catch {}
+  }
+
   async function init() {
     const data = await fetch("./skills.json").then((r) => r.json());
 
     document.title = data.title;
     document.querySelector("header h1").textContent = data.title;
-    document.getElementById("install-all").textContent = data.installAll;
+    const installAll = document.getElementById("install-all");
+    installAll.dataset.apm = data.installAll.apm;
+    installAll.dataset.gh = data.installAll.gh;
     const repoLink = document.getElementById("repo-link");
     repoLink.href = data.repoUrl;
     repoLink.textContent = data.repo;
@@ -193,10 +232,16 @@
           <a class="source" href="${esc(s.source)}">view source</a>
         </div>
         <p>${esc(s.description)}</p>
-        <span class="cmd"><code>${esc(s.install)}</code><button data-copy>Copy</button></span>
+        <span class="cmd"><code data-apm="${esc(s.install.apm)}" data-gh="${esc(s.install.gh)}"></code><button data-copy>Copy</button></span>
       </li>`).join("");
 
     document.querySelectorAll("button[data-copy]").forEach(wireCopy);
+
+    let installer = "apm";
+    try { installer = localStorage.getItem("installer") || "apm"; } catch {}
+    applyInstaller(installer === "gh" ? "gh" : "apm");
+    document.querySelectorAll(".segmented button").forEach((button) =>
+      button.addEventListener("click", () => applyInstaller(button.dataset.installer)));
 
     const count = document.getElementById("count");
     const empty = document.getElementById("empty");
