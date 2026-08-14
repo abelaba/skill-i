@@ -3,40 +3,51 @@
 A template for publishing an organization's agent skills as a browsable,
 searchable website with one-line install commands. Skills install on Claude
 Code, GitHub Copilot, Cursor, and other harnesses via
-[APM](https://microsoft.github.io/apm/) or the
+[APM](https://microsoft.github.io/apm/) or, on GitHub-hosted repos, the
 [GitHub CLI](https://cli.github.com/manual/gh_skill_install).
 
 The website lists every skill with a search filter and copyable install
-commands, and is deployed to GitHub Pages on every push to `main`. Skills
-live in this repository as directories under the configured skills folder
-(default `.apm/skills/`).
+commands, and deploys to GitHub Pages or GitLab Pages on every push to the
+default branch. Skills live in this repository as directories under the
+configured skills folder (default `skills/`).
+
+The template is host-agnostic: the build detects the git host and repo slug
+from the CI environment (GitHub Actions or GitLab CI) or the `origin` remote,
+and generates matching install commands and source links. On non-GitHub hosts
+APM commands use the fully qualified form (`host/owner/repo`) and the GitHub
+CLI option is hidden.
 
 ## Setting up your own index
 
-1. Create a repository from this template ("Use this template" on GitHub).
-2. In the repository settings under Pages, set the source to "GitHub Actions".
+1. Create a repository from this template ("Use this template" on GitHub, or
+   fork/import on GitLab).
+2. On GitHub: in the repository settings under Pages, set the source to
+   "GitHub Actions". On GitLab: nothing to configure, the `pages` job in
+   `.gitlab-ci.yml` publishes automatically.
 3. Replace the example skills with your own (see below) and adjust the
    configuration if needed.
-4. Push to `main`. The site goes live at
-   `https://<owner>.github.io/<repo>/`.
+4. Push to the default branch. The site goes live at
+   `https://<owner>.github.io/<repo>/` or `https://<owner>.gitlab.io/<repo>/`.
 
 ## Configuration
 
 | Setting | Where | Default |
 | --- | --- | --- |
-| Skills folder | `env.SKILLS_DIR` in `.github/workflows/pages.yml` and `ci.yml` | `.apm/skills` |
-| Site title | `env.SITE_TITLE` in `.github/workflows/pages.yml` | `Skill Index` |
+| Skills folder | `SKILLS_DIR` in `.github/workflows/*.yml` and `.gitlab-ci.yml` | `skills` |
+| Site title | `SITE_TITLE` in `.github/workflows/pages.yml` and `.gitlab-ci.yml` | `Skill Index` |
 | Package name and author | `apm.yml` | template values |
 | Color palette | CSS custom properties at the top of `site/index.html` | brand palette |
 
-Repository owner and name are derived automatically from the GitHub
-environment in CI (or the `origin` remote locally), so install commands and
-source links are always correct for your repository.
+Git host, repository owner, and name are derived automatically from the CI
+environment (or the `origin` remote locally), so install commands and source
+links are always correct for your repository. Keep the skills folder named
+`skills` (or `.apm/skills`) if you want the install-everything commands to
+work: both APM and the GitHub CLI discover skills by that convention.
 
 ## Adding a skill
 
 1. Create a directory under the skills folder, e.g.
-   `.apm/skills/<skill-name>/`, containing a `SKILL.md`.
+   `skills/<skill-name>/`, containing a `SKILL.md`.
 2. Start the file with YAML frontmatter:
 
    ```yaml
@@ -56,14 +67,20 @@ The `skill-authoring` example skill documents the conventions in detail.
 The website offers both commands behind a toggle. Directly:
 
 ```sh
-# APM: the whole index, or one skill
+# APM on GitHub: the whole index, or one skill
 apm install <owner>/<repo>
-apm install <owner>/<repo>/.apm/skills/<skill-name>
+apm install <owner>/<repo>/skills/<skill-name>
 
-# GitHub CLI: all skills, or one skill
+# APM on any other host (GitLab, self-hosted): fully qualified form
+apm install <host>/<owner>/<repo>
+apm install <host>/<owner>/<repo>/skills/<skill-name>
+
+# GitHub CLI (GitHub-hosted repos only): all skills, or one skill
 gh skill install <owner>/<repo> --all
-gh skill install <owner>/<repo> .apm/skills/<skill-name>
+gh skill install <owner>/<repo> skills/<skill-name>
 ```
+
+The website also offers SSH forms for private repos accessed by SSH key.
 
 ## Continuous integration
 
@@ -81,13 +98,12 @@ gh skill install <owner>/<repo> .apm/skills/<skill-name>
 ## Repository layout
 
 ```
-.apm/skills/<name>/SKILL.md   The skills (folder configurable via SKILLS_DIR)
-apm.yml                       APM package manifest
-apm.lock.yaml                 APM lockfile, required by the CI checks
+skills/<name>/SKILL.md        The skills (folder configurable via SKILLS_DIR)
 site/                         Static website source (single file, no dependencies)
 scripts/build-site.mjs        Generates _site/ (site + skills.json) from the skills
 .github/workflows/pages.yml   Builds and deploys the site to GitHub Pages
-.github/workflows/ci.yml      Validates skills on pull requests
+.github/workflows/ci.yml      Validates skills on pull requests (GitHub)
+.gitlab-ci.yml                Validates skills and publishes GitLab Pages (GitLab)
 ```
 
 ## Working on the website

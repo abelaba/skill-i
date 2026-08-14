@@ -1,0 +1,25 @@
+# GitLab CI equivalent of the GitHub workflows: validates skills on merge
+# requests and publishes the website with GitLab Pages on the default branch.
+
+# Template configuration (keep in sync with .github/workflows/*.yml)
+variables:
+  SKILLS_DIR: skills
+  SITE_TITLE: Skill Index
+
+validate:
+  image: node:22
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  script:
+    - node scripts/build-site.mjs
+
+pages:
+  image: node:22
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  script:
+    - node scripts/build-site.mjs
+    - mv _site public
+  artifacts:
+    paths:
+      - public
