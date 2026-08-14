@@ -8,9 +8,6 @@ author: aai-institute
 targets:
 - claude
 dependencies:
-  # External skills: reference skills that live in other repositories.
-  # They are installed alongside the local skills in .apm/skills/.
-  # Pin a tag or commit SHA with #<ref> to prevent drift.
   apm: []
   mcp: []
 includes: auto
