@@ -1,6 +1,6 @@
 name: skill-index
 version: 1.0.0
-description: APM project for skill-index
+description: Curated index of agent skills, installable via APM and browsable on a static website.
 author: aai-institute
 # Which agent platforms to deploy to.
 # Resolution order: --target flag > this field > auto-detect from filesystem.

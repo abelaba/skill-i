@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Skill Index</title>
+<meta name="description" content="Browse and install agent skills with APM.">
+<style>
+  :root {
+    --bg: #fafaf9;
+    --surface: #ffffff;
+    --text: #1c1917;
+    --muted: #6b6560;
+    --border: #e5e2de;
+    --accent: #1d4ed8;
+    --accent-soft: #eff4ff;
+    --code-bg: #f3f1ef;
+    color-scheme: light dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #131211;
+      --surface: #1c1a19;
+      --text: #eeece9;
+      --muted: #a39d96;
+      --border: #2e2b28;
+      --accent: #7ba3f7;
+      --accent-soft: #1d2434;
+      --code-bg: #26232131;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  main { max-width: 860px; margin: 0 auto; padding: 3rem 1.25rem 5rem; }
+  header h1 { font-size: 2rem; letter-spacing: -0.02em; }
+  header p.tagline { color: var(--muted); margin-top: 0.35rem; max-width: 60ch; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  .setup {
+    margin-top: 2rem;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface);
+    padding: 1.1rem 1.25rem;
+  }
+  .setup h2 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.75rem; }
+  .step { display: flex; align-items: baseline; gap: 0.75rem; margin-top: 0.6rem; flex-wrap: wrap; }
+  .step .label { color: var(--muted); font-size: 0.85rem; min-width: 11rem; }
+
+  .cmd {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 0.3rem 0.4rem 0.3rem 0.7rem;
+    max-width: 100%;
+  }
+  .cmd code {
+    font: 0.85rem/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    white-space: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .cmd button {
+    flex: none;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    border-radius: 5px;
+    font-size: 0.72rem;
+    padding: 0.15rem 0.5rem;
+    cursor: pointer;
+  }
+  .cmd button:hover { color: var(--text); }
+  .cmd button.copied { color: var(--accent); border-color: var(--accent); }
+
+  .toolbar { display: flex; align-items: center; gap: 1rem; margin: 2.5rem 0 1rem; }
+  .toolbar h2 { font-size: 1.15rem; }
+  .toolbar .count { color: var(--muted); font-size: 0.85rem; }
+  #search {
+    margin-left: auto;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 0.45rem 0.75rem;
+    font-size: 0.9rem;
+    width: min(260px, 45vw);
+  }
+  #search:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+
+  ul.skills { list-style: none; display: grid; gap: 0.9rem; }
+  .skill {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface);
+    padding: 1.1rem 1.25rem;
+  }
+  .skill .head { display: flex; align-items: baseline; gap: 0.75rem; flex-wrap: wrap; }
+  .skill h3 { font-size: 1.05rem; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .skill .source { font-size: 0.8rem; margin-left: auto; }
+  .skill p { color: var(--muted); font-size: 0.92rem; margin: 0.4rem 0 0.8rem; max-width: 70ch; }
+  .empty { color: var(--muted); padding: 2rem 0; }
+  footer { margin-top: 4rem; color: var(--muted); font-size: 0.85rem; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Skill Index</h1>
+    <p class="tagline">A curated set of agent skills, installable on Claude Code, GitHub Copilot,
+    Cursor, and other harnesses via <a href="https://microsoft.github.io/apm/">APM</a>.</p>
+  </header>
+
+  <section class="setup">
+    <h2>Getting started</h2>
+    <div class="step">
+      <span class="label">1. Install APM</span>
+      <span class="cmd"><code>curl -sSL https://aka.ms/apm-unix | sh</code><button data-copy>Copy</button></span>
+    </div>
+    <div class="step">
+      <span class="label">2. Install every skill</span>
+      <span class="cmd"><code id="install-all"></code><button data-copy>Copy</button></span>
+    </div>
+    <div class="step">
+      <span class="label">or pick one below</span>
+    </div>
+  </section>
+
+  <div class="toolbar">
+    <h2>Skills</h2>
+    <span class="count" id="count"></span>
+    <input id="search" type="search" placeholder="Filter skills" aria-label="Filter skills">
+  </div>
+
+  <ul class="skills" id="skills"></ul>
+  <p class="empty" id="empty" hidden>No skills match your filter.</p>
+
+  <footer>
+    <p>Source: <a id="repo-link" href="#"></a>. To add a skill, open a pull request
+    with a new directory under <code>.apm/skills/</code>.</p>
+  </footer>
+</main>
+
+<script>
+  const esc = (s) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+  function wireCopy(button) {
+    button.addEventListener("click", async () => {
+      const code = button.parentElement.querySelector("code");
+      await navigator.clipboard.writeText(code.textContent);
+      button.textContent = "Copied";
+      button.classList.add("copied");
+      setTimeout(() => { button.textContent = "Copy"; button.classList.remove("copied"); }, 1500);
+    });
+  }
+
+  async function init() {
+    const data = await fetch("./skills.json").then((r) => r.json());
+
+    document.getElementById("install-all").textContent = data.installAll;
+    const repoLink = document.getElementById("repo-link");
+    repoLink.href = data.repoUrl;
+    repoLink.textContent = data.repo;
+
+    const list = document.getElementById("skills");
+    list.innerHTML = data.skills.map((s) => `
+      <li class="skill" data-text="${esc((s.name + " " + s.description).toLowerCase())}">
+        <div class="head">
+          <h3>${esc(s.name)}</h3>
+          <a class="source" href="${esc(s.source)}">view source</a>
+        </div>
+        <p>${esc(s.description)}</p>
+        <span class="cmd"><code>${esc(s.install)}</code><button data-copy>Copy</button></span>
+      </li>`).join("");
+
+    document.querySelectorAll("button[data-copy]").forEach(wireCopy);
+
+    const count = document.getElementById("count");
+    const empty = document.getElementById("empty");
+    const items = [...list.children];
+    const update = (q) => {
+      let visible = 0;
+      for (const item of items) {
+        const show = item.dataset.text.includes(q);
+        item.hidden = !show;
+        if (show) visible++;
+      }
+      count.textContent = q ? `${visible} of ${items.length}` : `${items.length}`;
+      empty.hidden = visible > 0;
+    };
+    update("");
+    document.getElementById("search").addEventListener("input", (e) => update(e.target.value.trim().toLowerCase()));
+  }
+
+  init();
+</script>
+</body>
+</html>
