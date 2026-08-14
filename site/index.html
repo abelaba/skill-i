@@ -6,27 +6,33 @@
 <title>Skill Index</title>
 <meta name="description" content="Browse and install agent skills with APM.">
 <style>
+  /* Brand palette
+     primary:   dark-blue-bg #172736, dark-blue #084059, grey #ced8de,
+                light-grey #eaeef1, dark-green #18a5a7,
+                electric-green #bfffc7, electric-indigo #704dff
+     secondary: blue #3f89e4, blue-bloom #46add5, lilac #bd86f8,
+                yellow #ffc819, orange #ef9336, red #fd5e42 */
   :root {
-    --bg: #fafaf9;
+    --bg: #eaeef1;
     --surface: #ffffff;
-    --text: #1c1917;
-    --muted: #6b6560;
-    --border: #e5e2de;
-    --accent: #1d4ed8;
-    --accent-soft: #eff4ff;
-    --code-bg: #f3f1ef;
+    --text: #172736;
+    --muted: #084059;
+    --border: #ced8de;
+    --accent: #704dff;
+    --accent-soft: rgba(112, 77, 255, 0.08);
+    --code-bg: #eaeef1;
     color-scheme: light dark;
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #131211;
-      --surface: #1c1a19;
-      --text: #eeece9;
-      --muted: #a39d96;
-      --border: #2e2b28;
-      --accent: #7ba3f7;
-      --accent-soft: #1d2434;
-      --code-bg: #26232131;
+      --bg: #172736;
+      --surface: rgba(8, 64, 89, 0.45);
+      --text: #eaeef1;
+      --muted: #ced8de;
+      --border: rgba(206, 216, 222, 0.22);
+      --accent: #bfffc7;
+      --accent-soft: rgba(24, 165, 167, 0.2);
+      --code-bg: rgba(23, 39, 54, 0.65);
     }
   }
   * { box-sizing: border-box; margin: 0; }
