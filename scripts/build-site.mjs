@@ -16,10 +16,18 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const skillsDir = join(root, ".apm", "skills");
 const outDir = join(root, "_site");
 
-const FALLBACK_REPO = "aai-institute/skills-index";
+// Template configuration, normally set in .github/workflows/pages.yml.
+// SKILLS_DIR: repo-relative folder that contains the skill directories.
+// SITE_TITLE: heading shown on the website.
+const SKILLS_DIR = (process.env.SKILLS_DIR || ".apm/skills").replace(/^\/+|\/+$/g, "");
+const SITE_TITLE = process.env.SITE_TITLE || "Skill Index";
+// Used when the repo has no GitHub remote yet (e.g. building right after
+// creating a repo from the template). CI and cloned repos derive the real slug.
+const FALLBACK_REPO = "OWNER/REPO";
+
+const skillsDir = join(root, SKILLS_DIR);
 
 function repoSlug() {
   if (process.env.GITHUB_REPOSITORY) return process.env.GITHUB_REPOSITORY;
@@ -133,8 +141,8 @@ if (existsSync(skillsDir)) {
       description: attrs.description || firstParagraph(body),
       origin: "local",
       originRepo: repo,
-      install: `apm install ${repo}/.apm/skills/${entry.name}`,
-      source: `https://github.com/${repo}/tree/main/.apm/skills/${entry.name}`,
+      install: `apm install ${repo}/${SKILLS_DIR}/${entry.name}`,
+      source: `https://github.com/${repo}/tree/main/${SKILLS_DIR}/${entry.name}`,
     });
   }
 }
@@ -148,6 +156,7 @@ writeFileSync(
   join(outDir, "skills.json"),
   JSON.stringify(
     {
+      title: SITE_TITLE,
       repo,
       repoUrl: `https://github.com/${repo}`,
       installAll: `apm install ${repo}`,

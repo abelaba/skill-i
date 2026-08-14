@@ -5,6 +5,13 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# Template configuration
+env:
+  # Repo-relative folder containing your skill directories (<name>/SKILL.md).
+  SKILLS_DIR: .apm/skills
+  # Heading shown on the website.
+  SITE_TITLE: Skill Index
+
 permissions:
   contents: read
   pages: write

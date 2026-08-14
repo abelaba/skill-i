@@ -177,6 +177,8 @@
   async function init() {
     const data = await fetch("./skills.json").then((r) => r.json());
 
+    document.title = data.title;
+    document.querySelector("header h1").textContent = data.title;
     document.getElementById("install-all").textContent = data.installAll;
     const repoLink = document.getElementById("repo-link");
     repoLink.href = data.repoUrl;
