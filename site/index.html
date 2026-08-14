@@ -68,6 +68,7 @@
   }
   .segmented button + button { border-left: 1px solid var(--border); }
   .segmented button[aria-checked="true"] { background: var(--accent-soft); color: var(--accent); }
+  .segmented button:disabled { opacity: 0.4; cursor: not-allowed; }
   .controls { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
   #target {
     border: 1px solid var(--border);
@@ -95,7 +96,7 @@
   }
   .cmd code {
     font: 0.85rem/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    white-space: nowrap;
+    white-space: pre;
     overflow-x: auto;
     scrollbar-width: none;
   }
@@ -158,6 +159,10 @@
           <button data-installer="apm" role="radio">apm</button>
           <button data-installer="gh" role="radio">gh CLI</button>
         </div>
+        <div class="segmented" role="radiogroup" aria-label="Repository access">
+          <button data-source="https" role="radio">https</button>
+          <button data-source="ssh" role="radio">ssh</button>
+        </div>
         <select id="target" aria-label="Target agent"></select>
       </div>
     </div>
@@ -174,6 +179,10 @@
     <div class="step">
       <span class="label">or pick one below</span>
     </div>
+    <p class="note" id="ssh-note" hidden>Over SSH, single skills cannot be installed with a
+    one-line command: copy the snippet into <code>dependencies.apm</code> in your project's
+    <code>apm.yml</code>, then run <code>apm install</code>. Make sure your SSH key is loaded
+    (<code>ssh-add</code>).</p>
   </section>
 
   <div class="toolbar">
@@ -192,7 +201,7 @@
 </main>
 
 <script>
-  const esc = (s) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const esc = (s) => s.replace(/[&<>"'\n]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;", "\n": "&#10;" }[c]));
 
   function wireCopy(button) {
     button.addEventListener("click", async () => {
@@ -217,24 +226,35 @@
     { apm: "antigravity", gh: "antigravity", label: "Antigravity" },
   ];
 
-  const state = { installer: "apm", target: "" };
+  const state = { installer: "apm", source: "https", target: "" };
 
   function applyCommands() {
     const target = TARGETS.find((t) => t.apm === state.target) || TARGETS[0];
+    // The gh CLI authenticates via gh auth and takes no git URLs, so SSH
+    // only applies to apm commands.
+    const source = state.installer === "gh" ? "https" : state.source;
     for (const code of document.querySelectorAll("code[data-apm]")) {
-      let command = code.dataset[state.installer];
-      if (code.id !== "tool-install" && target.apm) {
+      const key = state.installer === "gh" ? "gh" : source === "ssh" ? "apmSsh" : "apm";
+      let command = code.dataset[key] ?? code.dataset[state.installer];
+      // Multi-line content is an apm.yml snippet, not a command; flags don't apply.
+      if (code.id !== "tool-install" && target.apm && !command.includes("\n")) {
         command += state.installer === "apm" ? ` --target ${target.apm}` : ` --agent ${target.gh}`;
       }
       code.textContent = command;
     }
-    for (const button of document.querySelectorAll(".segmented button")) {
+    for (const button of document.querySelectorAll("[data-installer]")) {
       button.setAttribute("aria-checked", String(button.dataset.installer === state.installer));
+    }
+    for (const button of document.querySelectorAll("[data-source]")) {
+      button.setAttribute("aria-checked", String(button.dataset.source === source));
+      if (button.dataset.source === "ssh") button.disabled = state.installer === "gh";
     }
     document.getElementById("tool-label").textContent =
       state.installer === "apm" ? "1. Install APM" : "1. Install the GitHub CLI";
+    document.getElementById("ssh-note").hidden = !(state.installer === "apm" && source === "ssh");
     try {
       localStorage.setItem("installer", state.installer);
+      localStorage.setItem("source", state.source);
       localStorage.setItem("target", state.target);
     } catch {}
   }
@@ -246,6 +266,7 @@
     document.querySelector("header h1").textContent = data.title;
     const installAll = document.getElementById("install-all");
     installAll.dataset.apm = data.installAll.apm;
+    installAll.dataset.apmSsh = data.installAll.apmSsh;
     installAll.dataset.gh = data.installAll.gh;
     const repoLink = document.getElementById("repo-link");
     repoLink.href = data.repoUrl;
@@ -260,7 +281,7 @@
           <a class="source" href="${esc(s.source)}">view source</a>
         </div>
         <p>${esc(s.description)}</p>
-        <span class="cmd"><code data-apm="${esc(s.install.apm)}" data-gh="${esc(s.install.gh)}"></code><button data-copy>Copy</button></span>
+        <span class="cmd"><code data-apm="${esc(s.install.apm)}" data-apm-ssh="${esc(s.install.apmSsh)}" data-gh="${esc(s.install.gh)}"></code><button data-copy>Copy</button></span>
       </li>`).join("");
 
     document.querySelectorAll("button[data-copy]").forEach(wireCopy);
@@ -270,14 +291,17 @@
 
     try {
       if (localStorage.getItem("installer") === "gh") state.installer = "gh";
+      if (localStorage.getItem("source") === "ssh") state.source = "ssh";
       const saved = localStorage.getItem("target") || "";
       if (TARGETS.some((t) => t.apm === saved)) state.target = saved;
     } catch {}
     select.value = state.target;
     applyCommands();
 
-    document.querySelectorAll(".segmented button").forEach((button) =>
+    document.querySelectorAll("[data-installer]").forEach((button) =>
       button.addEventListener("click", () => { state.installer = button.dataset.installer; applyCommands(); }));
+    document.querySelectorAll("[data-source]").forEach((button) =>
+      button.addEventListener("click", () => { state.source = button.dataset.source; applyCommands(); }));
     select.addEventListener("change", () => { state.target = select.value; applyCommands(); });
 
     const count = document.getElementById("count");
