@@ -10,8 +10,9 @@ targets:
 dependencies:
   # External skills: reference skills that live in other repositories.
   # They are installed alongside the local skills in .apm/skills/.
+  # Pin a tag or commit SHA with #<ref> to prevent drift.
   apm:
-  - anthropics/skills/skills/frontend-design
+  - anthropics/skills/skills/frontend-design#f6656c1256d5a8adfa37db9110046ef20bac644c
   mcp: []
 includes: auto
 scripts: {}
