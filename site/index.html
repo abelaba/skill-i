@@ -68,6 +68,17 @@
   }
   .segmented button + button { border-left: 1px solid var(--border); }
   .segmented button[aria-checked="true"] { background: var(--accent-soft); color: var(--accent); }
+  .controls { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+  #target {
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    background: var(--surface);
+    color: var(--muted);
+    font-size: 0.78rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    padding: 0.3rem 0.5rem;
+  }
+  #target:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
   .setup .note { color: var(--muted); font-size: 0.82rem; margin-top: 0.75rem; }
   .step { display: flex; align-items: baseline; gap: 0.75rem; margin-top: 0.6rem; flex-wrap: wrap; }
   .step .label { color: var(--muted); font-size: 0.85rem; min-width: 11rem; }
@@ -142,9 +153,12 @@
   <section class="setup">
     <div class="setup-head">
       <h2>Getting started</h2>
-      <div class="segmented" role="radiogroup" aria-label="Installer">
-        <button data-installer="apm" role="radio">apm</button>
-        <button data-installer="gh" role="radio">gh CLI</button>
+      <div class="controls">
+        <div class="segmented" role="radiogroup" aria-label="Installer">
+          <button data-installer="apm" role="radio">apm</button>
+          <button data-installer="gh" role="radio">gh CLI</button>
+        </div>
+        <select id="target" aria-label="Target agent"></select>
       </div>
     </div>
     <div class="step">
@@ -190,16 +204,39 @@
     });
   }
 
-  function applyInstaller(installer) {
+  // Target agents supported by both installers: apm --target <apm>, gh --agent <gh>.
+  const TARGETS = [
+    { apm: "", gh: "", label: "Default target" },
+    { apm: "claude", gh: "claude-code", label: "Claude Code" },
+    { apm: "copilot", gh: "github-copilot", label: "GitHub Copilot" },
+    { apm: "cursor", gh: "cursor", label: "Cursor" },
+    { apm: "codex", gh: "codex", label: "Codex" },
+    { apm: "gemini", gh: "gemini-cli", label: "Gemini CLI" },
+    { apm: "opencode", gh: "opencode", label: "OpenCode" },
+    { apm: "kiro", gh: "kiro-cli", label: "Kiro" },
+    { apm: "antigravity", gh: "antigravity", label: "Antigravity" },
+  ];
+
+  const state = { installer: "apm", target: "" };
+
+  function applyCommands() {
+    const target = TARGETS.find((t) => t.apm === state.target) || TARGETS[0];
     for (const code of document.querySelectorAll("code[data-apm]")) {
-      code.textContent = code.dataset[installer];
+      let command = code.dataset[state.installer];
+      if (code.id !== "tool-install" && target.apm) {
+        command += state.installer === "apm" ? ` --target ${target.apm}` : ` --agent ${target.gh}`;
+      }
+      code.textContent = command;
     }
     for (const button of document.querySelectorAll(".segmented button")) {
-      button.setAttribute("aria-checked", String(button.dataset.installer === installer));
+      button.setAttribute("aria-checked", String(button.dataset.installer === state.installer));
     }
     document.getElementById("tool-label").textContent =
-      installer === "apm" ? "1. Install APM" : "1. Install the GitHub CLI";
-    try { localStorage.setItem("installer", installer); } catch {}
+      state.installer === "apm" ? "1. Install APM" : "1. Install the GitHub CLI";
+    try {
+      localStorage.setItem("installer", state.installer);
+      localStorage.setItem("target", state.target);
+    } catch {}
   }
 
   async function init() {
@@ -228,11 +265,20 @@
 
     document.querySelectorAll("button[data-copy]").forEach(wireCopy);
 
-    let installer = "apm";
-    try { installer = localStorage.getItem("installer") || "apm"; } catch {}
-    applyInstaller(installer === "gh" ? "gh" : "apm");
+    const select = document.getElementById("target");
+    select.innerHTML = TARGETS.map((t) => `<option value="${t.apm}">${t.label}</option>`).join("");
+
+    try {
+      if (localStorage.getItem("installer") === "gh") state.installer = "gh";
+      const saved = localStorage.getItem("target") || "";
+      if (TARGETS.some((t) => t.apm === saved)) state.target = saved;
+    } catch {}
+    select.value = state.target;
+    applyCommands();
+
     document.querySelectorAll(".segmented button").forEach((button) =>
-      button.addEventListener("click", () => applyInstaller(button.dataset.installer)));
+      button.addEventListener("click", () => { state.installer = button.dataset.installer; applyCommands(); }));
+    select.addEventListener("change", () => { state.target = select.value; applyCommands(); });
 
     const count = document.getElementById("count");
     const empty = document.getElementById("empty");
