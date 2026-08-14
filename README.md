@@ -4,6 +4,13 @@ A curated index of agent skills, packaged with [APM](https://microsoft.github.io
 and browsable on a static website. Skills install on Claude Code, GitHub Copilot,
 Cursor, and every other harness APM supports.
 
+Skills can live in two places, and the website lists both:
+
+- **In this repository**, as directories under `.apm/skills/`.
+- **In other repositories**, referenced as APM dependencies in `apm.yml`.
+
+Installing the whole index pulls in both kinds.
+
 ## Using the skills
 
 Install APM once:
@@ -28,6 +35,8 @@ Browse all skills on the website (published via GitHub Pages from this repo).
 
 ## Adding a skill
 
+### Option 1: keep the skill in this repository
+
 1. Create a directory under `.apm/skills/<skill-name>/` containing a `SKILL.md`.
 2. Start the file with YAML frontmatter:
 
@@ -43,13 +52,30 @@ Browse all skills on the website (published via GitHub Pages from this repo).
 
 The `skill-authoring` skill in this index documents the conventions in detail.
 
+### Option 2: reference a skill that lives in another repository
+
+Add the skill to `dependencies.apm` in `apm.yml`:
+
+```yaml
+dependencies:
+  apm:
+  - anthropics/skills/skills/frontend-design
+  - your-org/your-repo/path/to/skill#v1.0.0
+```
+
+Then run `apm install` and commit `apm.yml` together with the updated
+`apm.lock.yaml`. Pin a tag or commit SHA with `#<ref>` to prevent drift.
+The website shows external skills with a badge naming their source repository
+and reads their descriptions from the source `SKILL.md`.
+
 ## Repository layout
 
 ```
-.apm/skills/<name>/SKILL.md   The skills themselves (APM package content)
-apm.yml                       APM package manifest
+.apm/skills/<name>/SKILL.md   Skills hosted in this repository
+apm.yml                       APM package manifest; external skills under dependencies.apm
+apm.lock.yaml                 Pinned resolution of external dependencies
 site/                         Static website source
-scripts/build-site.mjs        Generates _site/ (site + skills.json) from the skills
+scripts/build-site.mjs        Generates _site/ (site + skills.json) from both skill sources
 .github/workflows/pages.yml   Builds and deploys the site to GitHub Pages
 ```
 

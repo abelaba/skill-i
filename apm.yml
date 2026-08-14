@@ -8,7 +8,10 @@ author: aai-institute
 targets:
 - claude
 dependencies:
-  apm: []
+  # External skills: reference skills that live in other repositories.
+  # They are installed alongside the local skills in .apm/skills/.
+  apm:
+  - anthropics/skills/skills/frontend-design
   mcp: []
 includes: auto
 scripts: {}

@@ -105,6 +105,16 @@
   }
   .skill .head { display: flex; align-items: baseline; gap: 0.75rem; flex-wrap: wrap; }
   .skill h3 { font-size: 1.05rem; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .badge {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    padding: 0.1rem 0.55rem;
+    color: var(--muted);
+  }
+  .badge.external { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
   .skill .source { font-size: 0.8rem; margin-left: auto; }
   .skill p { color: var(--muted); font-size: 0.92rem; margin: 0.4rem 0 0.8rem; max-width: 70ch; }
   .empty { color: var(--muted); padding: 2rem 0; }
@@ -144,8 +154,10 @@
   <p class="empty" id="empty" hidden>No skills match your filter.</p>
 
   <footer>
-    <p>Source: <a id="repo-link" href="#"></a>. To add a skill, open a pull request
-    with a new directory under <code>.apm/skills/</code>.</p>
+    <p>Source: <a id="repo-link" href="#"></a>. To add a skill, open a pull request:
+    either add a directory under <code>.apm/skills/</code>, or reference a skill that
+    lives in another repository by adding it to <code>dependencies.apm</code> in
+    <code>apm.yml</code>. Installing the whole index pulls in both.</p>
   </footer>
 </main>
 
@@ -172,9 +184,10 @@
 
     const list = document.getElementById("skills");
     list.innerHTML = data.skills.map((s) => `
-      <li class="skill" data-text="${esc((s.name + " " + s.description).toLowerCase())}">
+      <li class="skill" data-text="${esc((s.name + " " + s.description + " " + s.origin + " " + s.originRepo).toLowerCase())}">
         <div class="head">
           <h3>${esc(s.name)}</h3>
+          <span class="badge ${esc(s.origin)}" title="${s.origin === "external" ? "Lives in " + esc(s.originRepo) : "Lives in this repository"}">${s.origin === "external" ? esc(s.originRepo) : "local"}</span>
           <a class="source" href="${esc(s.source)}">view source</a>
         </div>
         <p>${esc(s.description)}</p>

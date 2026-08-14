@@ -1,6 +1,14 @@
 #!/usr/bin/env node
-// Builds the static site into _site/: copies site/ and generates skills.json
-// from the SKILL.md files under .apm/skills/. No dependencies required.
+// Builds the static site into _site/: copies site/ and generates skills.json.
+//
+// Skills come from two places:
+//   1. Local:    .apm/skills/<name>/SKILL.md in this repository
+//   2. External: entries under dependencies.apm in apm.yml, pointing at
+//                skills that live in other repositories
+//
+// External metadata is read from apm_modules/ when `apm install` has run;
+// otherwise it is fetched from the source repository on GitHub.
+// No dependencies required.
 
 import { cpSync, mkdirSync, readdirSync, readFileSync, writeFileSync, existsSync } from "node:fs";
 import { execSync } from "node:child_process";
@@ -46,6 +54,71 @@ function firstParagraph(markdown) {
   return "";
 }
 
+// Reads dependencies.apm entries out of apm.yml without a YAML library.
+function apmDependencies() {
+  const manifest = join(root, "apm.yml");
+  if (!existsSync(manifest)) return [];
+  const lines = readFileSync(manifest, "utf8").split(/\r?\n/);
+  const deps = [];
+  let inDeps = false;
+  let inApm = false;
+  for (const line of lines) {
+    const item = line.match(/^\s+-\s*(\S+)/);
+    if (item) {
+      if (inDeps && inApm && !item[1].startsWith("#")) deps.push(item[1]);
+    } else if (/^\S/.test(line)) {
+      inDeps = /^dependencies:/.test(line);
+      inApm = false;
+    } else if (inDeps && /^\s+[A-Za-z_]+:/.test(line)) {
+      inApm = /^\s+apm:/.test(line);
+    }
+  }
+  return deps;
+}
+
+async function externalSkill(spec) {
+  const [path, ref] = spec.split("#");
+  const segments = path.split("/");
+  const [owner, repo] = segments;
+  const subpath = segments.slice(2).join("/");
+  const name = segments[segments.length - 1];
+  const treeRef = ref || "HEAD";
+
+  let description = "";
+  // Prefer locally installed metadata, fall back to fetching from GitHub.
+  const candidates = subpath
+    ? [join(root, "apm_modules", owner, repo, subpath, "SKILL.md")]
+    : [join(root, "apm_modules", owner, repo, "apm.yml")];
+  for (const file of candidates) {
+    if (!existsSync(file)) continue;
+    const text = readFileSync(file, "utf8");
+    const { attrs, body } = parseFrontmatter(text);
+    description = attrs.description || firstParagraph(body);
+  }
+  if (!description) {
+    const remote = subpath ? `${subpath}/SKILL.md` : "apm.yml";
+    try {
+      const res = await fetch(`https://raw.githubusercontent.com/${owner}/${repo}/${treeRef}/${remote}`);
+      if (res.ok) {
+        const { attrs, body } = parseFrontmatter(await res.text());
+        description = attrs.description || firstParagraph(body);
+      }
+    } catch {
+      // offline or private repo; keep the generic description
+    }
+  }
+  if (!description) description = `External ${subpath ? "skill" : "package"} from ${owner}/${repo}.`;
+
+  return {
+    name,
+    description,
+    origin: "external",
+    originRepo: `${owner}/${repo}`,
+    install: `apm install ${spec}`,
+    source: `https://github.com/${owner}/${repo}/tree/${treeRef}/${subpath}`.replace(/\/$/, ""),
+  };
+}
+
 const repo = repoSlug();
 const skills = [];
 
@@ -58,13 +131,15 @@ if (existsSync(skillsDir)) {
     skills.push({
       name: attrs.name || entry.name,
       description: attrs.description || firstParagraph(body),
-      path: `.apm/skills/${entry.name}`,
+      origin: "local",
+      originRepo: repo,
       install: `apm install ${repo}/.apm/skills/${entry.name}`,
       source: `https://github.com/${repo}/tree/main/.apm/skills/${entry.name}`,
     });
   }
 }
 
+skills.push(...(await Promise.all(apmDependencies().map(externalSkill))));
 skills.sort((a, b) => a.name.localeCompare(b.name));
 
 mkdirSync(outDir, { recursive: true });
@@ -83,4 +158,5 @@ writeFileSync(
   )
 );
 
-console.log(`Built _site with ${skills.length} skill(s) for ${repo}`);
+const external = skills.filter((s) => s.origin === "external").length;
+console.log(`Built _site with ${skills.length} skill(s) (${skills.length - external} local, ${external} external) for ${repo}`);
