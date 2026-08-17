@@ -26,7 +26,9 @@ import json
 import os
 import re
 import shutil
+from dataclasses import asdict, dataclass
 from pathlib import Path
+from typing import List
 
 import yaml
 
@@ -39,6 +41,33 @@ REPO_ACCESS = "ssh" if os.environ.get("REPO_ACCESS") == "ssh" else "https"
 # Used outside CI when no explicit configuration is set (e.g. a local
 # preview): commands then show an obvious placeholder.
 FALLBACK = {"host": "github.com", "repo": "OWNER/REPO"}
+
+
+# Field names are camelCase on purpose: they serialize 1:1 into skills.json,
+# which site/index.html reads.
+@dataclass
+class Install:
+    apm: str
+
+
+@dataclass
+class Skill:
+    name: str
+    description: str
+    install: Install
+    source: str
+
+
+@dataclass
+class Site:
+    title: str
+    host: str
+    repo: str
+    repoUrl: str
+    skillsDir: str
+    access: str
+    installAll: Install
+    skills: List[Skill]
 
 
 def resolve_repo():
@@ -97,35 +126,36 @@ def main():
         name = skill_file.parent.name
         attrs = parse_frontmatter(skill_file.read_text(encoding="utf-8"))
         skills.append(
-            {
-                "name": str(attrs.get("name") or name),
-                "description": str(attrs.get("description") or ""),
-                "install": {"apm": install_command(f"{SKILLS_DIR}/{name}")},
-                "source": f"{tree_base}/{SKILLS_DIR}/{name}",
-            }
+            Skill(
+                name=str(attrs.get("name") or name),
+                description=str(attrs.get("description") or ""),
+                install=Install(apm=install_command(f"{SKILLS_DIR}/{name}")),
+                source=f"{tree_base}/{SKILLS_DIR}/{name}",
+            )
         )
 
-    skills.sort(key=lambda s: s["name"])
+    skills.sort(key=lambda s: s.name)
 
-    shutil.copytree(ROOT / "site", OUT_DIR, dirs_exist_ok=True)
-    data = {
-        "title": SITE_TITLE,
-        "host": host,
-        "repo": repo,
-        "repoUrl": f"https://{host}/{repo}",
-        "skillsDir": SKILLS_DIR,
-        "access": REPO_ACCESS,
-        "installAll": {
-            "apm": (
+    site = Site(
+        title=SITE_TITLE,
+        host=host,
+        repo=repo,
+        repoUrl=f"https://{host}/{repo}",
+        skillsDir=SKILLS_DIR,
+        access=REPO_ACCESS,
+        installAll=Install(
+            apm=(
                 f"apm install git@{host}:{repo}.git"
                 if REPO_ACCESS == "ssh"
                 else f"apm install {apm_ref}"
-            ),
-        },
-        "skills": skills,
-    }
+            )
+        ),
+        skills=skills,
+    )
+
+    shutil.copytree(ROOT / "site", OUT_DIR, dirs_exist_ok=True)
     (OUT_DIR / "skills.json").write_text(
-        json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+        json.dumps(asdict(site), indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
     )
 
     print(f"Built _site with {len(skills)} skill(s) for {repo}")
