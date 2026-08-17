@@ -62,21 +62,10 @@ def resolve_repo():
 
 
 def parse_frontmatter(text):
-    """Splits a leading --- delimited frontmatter block off `text` and
-    parses it as YAML. Returns (attrs, body)."""
+    """Parses the leading --- delimited frontmatter block of `text` as YAML."""
     m = re.match(r"^---\r?\n(.*?)\r?\n---\r?\n?", text, re.DOTALL)
-    if not m:
-        return {}, text
-    attrs = yaml.safe_load(m.group(1))
-    return (attrs if isinstance(attrs, dict) else {}), text[m.end():]
-
-
-def first_paragraph(markdown):
-    for block in re.split(r"\r?\n\r?\n", markdown):
-        t = block.strip()
-        if t and not t.startswith("#") and not t.startswith("```"):
-            return re.sub(r"\s+", " ", t)
-    return ""
+    attrs = yaml.safe_load(m.group(1)) if m else None
+    return attrs if isinstance(attrs, dict) else {}
 
 
 def main():
@@ -106,11 +95,11 @@ def main():
     skills = []
     for skill_file in sorted((ROOT / SKILLS_DIR).glob("*/SKILL.md")):
         name = skill_file.parent.name
-        attrs, body = parse_frontmatter(skill_file.read_text(encoding="utf-8"))
+        attrs = parse_frontmatter(skill_file.read_text(encoding="utf-8"))
         skills.append(
             {
                 "name": str(attrs.get("name") or name),
-                "description": str(attrs.get("description") or first_paragraph(body)),
+                "description": str(attrs.get("description") or ""),
                 "install": {"apm": install_command(f"{SKILLS_DIR}/{name}")},
                 "source": f"{tree_base}/{SKILLS_DIR}/{name}",
             }
