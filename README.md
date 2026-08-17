@@ -63,8 +63,6 @@ install-everything command to work: APM discovers skills by that convention.
 3. Open a pull request. CI validates the skills; when it merges to `main`,
    the website rebuilds and the skill appears in the index automatically.
 
-The `skill-authoring` example skill documents the conventions in detail.
-
 ## Installing skills from an index
 
 ```sh
