@@ -188,7 +188,7 @@
   <div class="toolbar">
     <h2>Skills</h2>
     <span class="count" id="count"></span>
-    <input id="search" type="search" placeholder="Filter skills" aria-label="Filter skills">
+    <input id="search" type="search" placeholder="Search skills" aria-label="Search skills">
   </div>
 
   <ul class="skills" id="skills"></ul>
@@ -280,7 +280,7 @@
 
     const list = document.getElementById("skills");
     list.innerHTML = data.skills.map((s) => `
-      <li class="skill" data-text="${esc((s.name + " " + s.description).toLowerCase())}">
+      <li class="skill" data-name="${esc(s.name)}" data-text="${esc((s.name + " " + s.description).toLowerCase())}">
         <div class="head">
           <h3>${esc(s.name)}</h3>
           <a class="source" href="${esc(s.source)}">view source</a>
@@ -312,18 +312,36 @@
     const count = document.getElementById("count");
     const empty = document.getElementById("empty");
     const items = [...list.children];
+    const itemByName = new Map(items.map((item) => [item.dataset.name, item]));
+
+    // Fuzzy search via Fuse.js from a CDN; if it cannot load (offline,
+    // blocked CDN), fall back to plain substring filtering.
+    let fuse = null;
+    try {
+      const { default: Fuse } = await import("https://cdn.jsdelivr.net/npm/fuse.js@7/dist/fuse.mjs");
+      fuse = new Fuse(data.skills, {
+        keys: [
+          { name: "name", weight: 2 },
+          { name: "description", weight: 1 },
+        ],
+        threshold: 0.35,
+        ignoreLocation: true,
+      });
+    } catch {}
+
     const update = (q) => {
-      let visible = 0;
-      for (const item of items) {
-        const show = item.dataset.text.includes(q);
-        item.hidden = !show;
-        if (show) visible++;
-      }
-      count.textContent = q ? `${visible} of ${items.length}` : `${items.length}`;
-      empty.hidden = visible > 0;
+      let matched;
+      if (!q) matched = items;
+      else if (fuse) matched = fuse.search(q).map((result) => itemByName.get(result.item.name));
+      else matched = items.filter((item) => item.dataset.text.includes(q.toLowerCase()));
+      const visible = new Set(matched);
+      for (const item of items) item.hidden = !visible.has(item);
+      list.append(...matched); // best match first; original order when unfiltered
+      count.textContent = q ? `${matched.length} of ${items.length}` : `${items.length}`;
+      empty.hidden = matched.length > 0;
     };
     update("");
-    document.getElementById("search").addEventListener("input", (e) => update(e.target.value.trim().toLowerCase()));
+    document.getElementById("search").addEventListener("input", (e) => update(e.target.value.trim()));
   }
 
   init();
