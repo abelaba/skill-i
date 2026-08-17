@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.9"
+# dependencies = ["pyyaml>=6"]
+# ///
 """Builds the static site into _site/: copies site/ and generates skills.json
 from the SKILL.md files in the skills folder.
 
-Requires PyYAML (pip install -r requirements.txt).
+Run with `uv run scripts/build-site.py`; uv installs the dependencies
+declared above automatically.
 
 Template configuration, set in .github/workflows/pages.yml or .gitlab-ci.yml:
   SKILLS_DIR:   repo-relative folder that contains the skill directories.

@@ -31,10 +31,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install dependencies
-        run: pip install -r requirements.txt
+      - uses: astral-sh/setup-uv@v6
       - name: Build site
-        run: python3 scripts/build-site.py
+        run: uv run scripts/build-site.py
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site

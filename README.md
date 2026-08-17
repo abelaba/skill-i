@@ -93,18 +93,17 @@ same with GitLab Pages on the default branch.
 skills/<name>/SKILL.md        The skills (folder configurable via SKILLS_DIR)
 site/                         Static website source (single file, no dependencies)
 scripts/build-site.py         Generates _site/ (site + skills.json) from the skills
-requirements.txt              Python dependencies of the build script
 .github/workflows/pages.yml   Builds and deploys the site to GitHub Pages
 .gitlab-ci.yml                Builds and publishes the site with GitLab Pages
 ```
 
 ## Working on the website
 
-Build and preview locally (Python 3):
+Build and preview locally (requires [uv](https://docs.astral.sh/uv/), which
+installs the script's dependencies automatically):
 
 ```sh
-pip install -r requirements.txt
-python3 scripts/build-site.py
+uv run scripts/build-site.py
 python3 -m http.server -d _site 8000
 ```
 
@@ -112,7 +111,7 @@ Outside CI the install commands show an `OWNER/REPO` placeholder; pass the
 configuration explicitly for a faithful preview:
 
 ```sh
-REPO_SLUG=acme/skills SKILLS_DIR=skills python3 scripts/build-site.py
+REPO_SLUG=acme/skills SKILLS_DIR=skills uv run scripts/build-site.py
 ```
 
 Then open http://localhost:8000. The build only reads the skill files, so it
