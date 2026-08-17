@@ -9,6 +9,7 @@ variables:
   # REPO_HOST: gitlab.example.com
   # REPO_SLUG: owner/repo
   # GIT_PLATFORM: gitlab   # github | gitlab | other
+  # REPO_ACCESS: https     # https | ssh; how consumers reach this repo
 
 validate:
   image: node:22

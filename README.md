@@ -38,6 +38,7 @@ CLI option is hidden.
 | Git host | `REPO_HOST` (e.g. `gitlab.example.com`) | from the CI platform |
 | Repository slug | `REPO_SLUG` (e.g. `owner/repo`) | from the CI platform |
 | Platform flavor | `GIT_PLATFORM`: `github`, `gitlab`, or `other` | guessed from the host |
+| Repo access | `REPO_ACCESS`: `https` or `ssh` | `https` |
 | Package name and author | `apm.yml` | template values |
 | Color palette | CSS custom properties at the top of `site/index.html` | brand palette |
 
@@ -86,7 +87,12 @@ gh skill install <owner>/<repo> --all
 gh skill install <owner>/<repo> skills/<skill-name>
 ```
 
-The website also offers SSH forms for private repos accessed by SSH key.
+With `REPO_ACCESS: ssh` the website shows SSH forms instead (for private
+repos accessed by SSH key): install-everything becomes
+`apm install git@<host>:<owner>/<repo>.git`, and single skills become an
+`apm.yml` dependencies snippet, since APM does not accept subpaths inside git
+URLs. The configured connection type is displayed next to the toggles. gh CLI
+commands are unaffected; the GitHub CLI authenticates through `gh auth`.
 
 ## Continuous integration
 

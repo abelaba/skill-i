@@ -15,6 +15,7 @@ env:
   # REPO_HOST: github.com
   # REPO_SLUG: owner/repo
   # GIT_PLATFORM: github   # github | gitlab | other; set for GitHub Enterprise
+  # REPO_ACCESS: https     # https | ssh; how consumers reach this repo
 
 permissions:
   contents: read

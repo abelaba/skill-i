@@ -18,8 +18,11 @@ const outDir = join(root, "_site");
 // GIT_PLATFORM: github | gitlab | other. Controls gh CLI commands and the
 //               source-link layout. Defaults to a guess from REPO_HOST; set it
 //               explicitly for GitHub Enterprise or self-hosted GitLab.
+// REPO_ACCESS:  https | ssh. How consumers reach the repo; decides which apm
+//               command form the website shows. Default https.
 const SKILLS_DIR = (process.env.SKILLS_DIR || "skills").replace(/^\/+|\/+$/g, "");
 const SITE_TITLE = process.env.SITE_TITLE || "Skill Index";
+const REPO_ACCESS = process.env.REPO_ACCESS === "ssh" ? "ssh" : "https";
 // Used outside CI when no explicit configuration is set (e.g. a local
 // preview): commands then show an obvious placeholder.
 const FALLBACK = { host: "github.com", repo: "OWNER/REPO" };
@@ -88,11 +91,13 @@ if (existsSync(skillsDir)) {
 			name: attrs.name || entry.name,
 			description: attrs.description || firstParagraph(body),
 			install: {
-				apm: `apm install ${apmRef}/${SKILLS_DIR}/${entry.name}`,
 				// Single skills over SSH need the apm.yml object form; this
 				// snippet goes under dependencies.apm, followed by `apm install`.
-				apmSsh: `- git: git@${host}:${repo}.git\n  path: ${SKILLS_DIR}/${entry.name}`,
-				// The gh CLI only supports GitHub-hosted repos.
+				apm: REPO_ACCESS === "ssh"
+					? `- git: git@${host}:${repo}.git\n  path: ${SKILLS_DIR}/${entry.name}`
+					: `apm install ${apmRef}/${SKILLS_DIR}/${entry.name}`,
+				// The gh CLI only supports GitHub-hosted repos; it authenticates
+				// via gh auth, so REPO_ACCESS does not apply to it.
 				...(isGitHub && { gh: `gh skill install ${repo} ${SKILLS_DIR}/${entry.name}` }),
 			},
 			source: `${treeBase}/${SKILLS_DIR}/${entry.name}`,
@@ -113,9 +118,9 @@ writeFileSync(
 			repo,
 			repoUrl: `https://${host}/${repo}`,
 			skillsDir: SKILLS_DIR,
+			access: REPO_ACCESS,
 			installAll: {
-				apm: `apm install ${apmRef}`,
-				apmSsh: `apm install git@${host}:${repo}.git`,
+				apm: REPO_ACCESS === "ssh" ? `apm install git@${host}:${repo}.git` : `apm install ${apmRef}`,
 				...(isGitHub && { gh: `gh skill install ${repo} --all` }),
 			},
 			skills,
