@@ -11,6 +11,10 @@ env:
   SKILLS_DIR: skills
   # Heading shown on the website.
   SITE_TITLE: Skill Index
+  # Optional overrides; by default host and slug come from the CI platform.
+  # REPO_HOST: github.com
+  # REPO_SLUG: owner/repo
+  # GIT_PLATFORM: github   # github | gitlab | other; set for GitHub Enterprise
 
 permissions:
   contents: read

@@ -3,44 +3,44 @@
 // from the SKILL.md files in the skills folder. No dependencies required.
 
 import { cpSync, mkdirSync, readdirSync, readFileSync, writeFileSync, existsSync } from "node:fs";
-import { execSync } from "node:child_process";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const outDir = join(root, "_site");
 
-// Template configuration, normally set in .github/workflows/pages.yml.
-// SKILLS_DIR: repo-relative folder that contains the skill directories.
-// SITE_TITLE: heading shown on the website.
+// Template configuration, set in .github/workflows/pages.yml or .gitlab-ci.yml.
+// SKILLS_DIR:   repo-relative folder that contains the skill directories.
+// SITE_TITLE:   heading shown on the website.
+// REPO_HOST:    git host, e.g. github.com or gitlab.example.com. Defaults to
+//               the value the CI platform provides.
+// REPO_SLUG:    repository path, e.g. owner/repo. Same default.
+// GIT_PLATFORM: github | gitlab | other. Controls gh CLI commands and the
+//               source-link layout. Defaults to a guess from REPO_HOST; set it
+//               explicitly for GitHub Enterprise or self-hosted GitLab.
 const SKILLS_DIR = (process.env.SKILLS_DIR || "skills").replace(/^\/+|\/+$/g, "");
 const SITE_TITLE = process.env.SITE_TITLE || "Skill Index";
-// Used when the repo has no remote yet (e.g. building right after creating
-// a repo from the template). CI and cloned repos derive the real host/slug.
+// Used outside CI when no explicit configuration is set (e.g. a local
+// preview): commands then show an obvious placeholder.
 const FALLBACK = { host: "github.com", repo: "OWNER/REPO" };
 
 const skillsDir = join(root, SKILLS_DIR);
 
-// Detects the git host and repo slug from CI environments (GitHub Actions,
-// GitLab CI) or the origin remote, so the template works on any git host.
-function detectRepo() {
+// Resolves host and slug: explicit env vars win, then the variables the CI
+// platform itself provides (GitHub Actions, GitLab CI), then the placeholder.
+function resolveRepo() {
+	if (process.env.REPO_HOST || process.env.REPO_SLUG) {
+		return {
+			host: process.env.REPO_HOST || FALLBACK.host,
+			repo: process.env.REPO_SLUG || FALLBACK.repo,
+		};
+	}
 	if (process.env.GITHUB_REPOSITORY) {
 		const host = (process.env.GITHUB_SERVER_URL || "https://github.com").replace(/^https?:\/\//, "");
 		return { host, repo: process.env.GITHUB_REPOSITORY };
 	}
 	if (process.env.CI_PROJECT_PATH) {
 		return { host: process.env.CI_SERVER_HOST || "gitlab.com", repo: process.env.CI_PROJECT_PATH };
-	}
-	try {
-		const url = execSync("git remote get-url origin", { cwd: root, stdio: ["ignore", "pipe", "ignore"] })
-			.toString()
-			.trim();
-		// Handles https://host/owner/repo(.git), git@host:owner/repo(.git),
-		// and ssh://git@host/owner/repo(.git) on default ports.
-		const m = url.match(/^(?:https?:\/\/|ssh:\/\/)?(?:[^@/]+@)?([^/:]+)[/:](.+?)(?:\.git)?\/?$/);
-		if (m) return { host: m[1], repo: m[2] };
-	} catch {
-		// no remote configured yet
 	}
 	return FALLBACK;
 }
@@ -64,13 +64,15 @@ function firstParagraph(markdown) {
 	return "";
 }
 
-const { host, repo } = detectRepo();
-const isGitHub = host === "github.com";
+const { host, repo } = resolveRepo();
+const platform =
+	process.env.GIT_PLATFORM || (host === "github.com" ? "github" : host.includes("gitlab") ? "gitlab" : "other");
+const isGitHub = platform === "github";
 // APM's bare owner/repo shorthand is GitHub-only; other hosts use the
 // FQDN shorthand (host/owner/repo), which supports the same subpath syntax.
-const apmRef = isGitHub ? repo : `${host}/${repo}`;
-// Browse-URL layout differs per host; GitLab inserts /-/ before tree/.
-const treeBase = host.includes("gitlab")
+const apmRef = host === "github.com" ? repo : `${host}/${repo}`;
+// Browse-URL layout differs per platform; GitLab inserts /-/ before tree/.
+const treeBase = platform === "gitlab"
 	? `https://${host}/${repo}/-/tree/main`
 	: `https://${host}/${repo}/tree/main`;
 

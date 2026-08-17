@@ -35,12 +35,18 @@ CLI option is hidden.
 | --- | --- | --- |
 | Skills folder | `SKILLS_DIR` in `.github/workflows/*.yml` and `.gitlab-ci.yml` | `skills` |
 | Site title | `SITE_TITLE` in `.github/workflows/pages.yml` and `.gitlab-ci.yml` | `Skill Index` |
+| Git host | `REPO_HOST` (e.g. `gitlab.example.com`) | from the CI platform |
+| Repository slug | `REPO_SLUG` (e.g. `owner/repo`) | from the CI platform |
+| Platform flavor | `GIT_PLATFORM`: `github`, `gitlab`, or `other` | guessed from the host |
 | Package name and author | `apm.yml` | template values |
 | Color palette | CSS custom properties at the top of `site/index.html` | brand palette |
 
-Git host, repository owner, and name are derived automatically from the CI
-environment (or the `origin` remote locally), so install commands and source
-links are always correct for your repository. Keep the skills folder named
+On github.com and gitlab.com (or self-managed GitLab CI) the defaults are
+correct without setting anything: the build reads the variables the CI
+platform itself provides. Set the overrides when the guess would be wrong,
+e.g. `GIT_PLATFORM: github` on GitHub Enterprise so gh CLI commands appear.
+The platform flavor controls whether gh CLI commands are offered and which
+source-link layout is used. Keep the skills folder named
 `skills` (or `.apm/skills`) if you want the install-everything commands to
 work: both APM and the GitHub CLI discover skills by that convention.
 
@@ -113,6 +119,13 @@ Build and preview locally (no dependencies beyond Node):
 ```sh
 node scripts/build-site.mjs
 python3 -m http.server -d _site 8000
+```
+
+Outside CI the install commands show an `OWNER/REPO` placeholder; pass the
+configuration explicitly for a faithful preview:
+
+```sh
+REPO_SLUG=acme/skills SKILLS_DIR=skills node scripts/build-site.mjs
 ```
 
 Then open http://localhost:8000. The build only reads the skill files, so it

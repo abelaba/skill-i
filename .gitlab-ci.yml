@@ -5,6 +5,10 @@
 variables:
   SKILLS_DIR: skills
   SITE_TITLE: Skill Index
+  # Optional overrides; by default host and slug come from the CI platform.
+  # REPO_HOST: gitlab.example.com
+  # REPO_SLUG: owner/repo
+  # GIT_PLATFORM: gitlab   # github | gitlab | other
 
 validate:
   image: node:22
