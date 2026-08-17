@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Builds the static site into _site/: copies site/ and generates skills.json
-from the SKILL.md files in the skills folder. Standard library only.
+from the SKILL.md files in the skills folder.
+
+Requires python-frontmatter (pip install -r requirements.txt).
 
 Template configuration, set in .github/workflows/pages.yml or .gitlab-ci.yml:
   SKILLS_DIR:   repo-relative folder that contains the skill directories.
@@ -20,6 +22,8 @@ import os
 import re
 import shutil
 from pathlib import Path
+
+import frontmatter
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT_DIR = ROOT / "_site"
@@ -50,18 +54,6 @@ def resolve_repo():
             "repo": os.environ["CI_PROJECT_PATH"],
         }
     return FALLBACK
-
-
-def parse_frontmatter(text):
-    m = re.match(r"^---\r?\n([\s\S]*?)\r?\n---\r?\n?", text)
-    if not m:
-        return {}, text
-    attrs = {}
-    for line in re.split(r"\r?\n", m.group(1)):
-        kv = re.match(r"^([A-Za-z0-9_-]+):\s*(.*)$", line)
-        if kv:
-            attrs[kv.group(1)] = kv.group(2).strip("\"'").strip()
-    return attrs, text[m.end():]
 
 
 def first_paragraph(markdown):
@@ -95,11 +87,11 @@ def main():
             skill_file = entry / "SKILL.md"
             if not entry.is_dir() or not skill_file.is_file():
                 continue
-            attrs, body = parse_frontmatter(skill_file.read_text(encoding="utf-8"))
+            post = frontmatter.loads(skill_file.read_text(encoding="utf-8"))
             skills.append(
                 {
-                    "name": attrs.get("name") or entry.name,
-                    "description": attrs.get("description") or first_paragraph(body),
+                    "name": str(post.get("name") or entry.name),
+                    "description": str(post.get("description") or first_paragraph(post.content)),
                     "install": {
                         # Single skills over SSH need the apm.yml object form; this
                         # snippet goes under dependencies.apm, followed by `apm install`.

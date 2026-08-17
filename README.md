@@ -93,15 +93,17 @@ same with GitLab Pages on the default branch.
 skills/<name>/SKILL.md        The skills (folder configurable via SKILLS_DIR)
 site/                         Static website source (single file, no dependencies)
 scripts/build-site.py         Generates _site/ (site + skills.json) from the skills
+requirements.txt              Python dependencies of the build script
 .github/workflows/pages.yml   Builds and deploys the site to GitHub Pages
 .gitlab-ci.yml                Builds and publishes the site with GitLab Pages
 ```
 
 ## Working on the website
 
-Build and preview locally (no dependencies beyond Python 3):
+Build and preview locally (Python 3):
 
 ```sh
+pip install -r requirements.txt
 python3 scripts/build-site.py
 python3 -m http.server -d _site 8000
 ```
