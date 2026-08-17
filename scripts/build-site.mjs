@@ -15,9 +15,9 @@ const outDir = join(root, "_site");
 // REPO_HOST:    git host, e.g. github.com or gitlab.example.com. Defaults to
 //               the value the CI platform provides.
 // REPO_SLUG:    repository path, e.g. owner/repo. Same default.
-// GIT_PLATFORM: github | gitlab | other. Controls gh CLI commands and the
-//               source-link layout. Defaults to a guess from REPO_HOST; set it
-//               explicitly for GitHub Enterprise or self-hosted GitLab.
+// GIT_PLATFORM: github | gitlab | other. Controls the source-link layout.
+//               Defaults to a guess from REPO_HOST; set it explicitly for
+//               self-hosted GitLab whose hostname does not contain "gitlab".
 // REPO_ACCESS:  https | ssh. How consumers reach the repo; decides which apm
 //               command form the website shows. Default https.
 const SKILLS_DIR = (process.env.SKILLS_DIR || "skills").replace(/^\/+|\/+$/g, "");
@@ -70,7 +70,6 @@ function firstParagraph(markdown) {
 const { host, repo } = resolveRepo();
 const platform =
 	process.env.GIT_PLATFORM || (host === "github.com" ? "github" : host.includes("gitlab") ? "gitlab" : "other");
-const isGitHub = platform === "github";
 // APM's bare owner/repo shorthand is GitHub-only; other hosts use the
 // FQDN shorthand (host/owner/repo), which supports the same subpath syntax.
 const apmRef = host === "github.com" ? repo : `${host}/${repo}`;
@@ -96,9 +95,6 @@ if (existsSync(skillsDir)) {
 				apm: REPO_ACCESS === "ssh"
 					? `- git: git@${host}:${repo}.git\n  path: ${SKILLS_DIR}/${entry.name}`
 					: `apm install ${apmRef}/${SKILLS_DIR}/${entry.name}`,
-				// The gh CLI only supports GitHub-hosted repos; it authenticates
-				// via gh auth, so REPO_ACCESS does not apply to it.
-				...(isGitHub && { gh: `gh skill install ${repo} ${SKILLS_DIR}/${entry.name}` }),
 			},
 			source: `${treeBase}/${SKILLS_DIR}/${entry.name}`,
 		});
@@ -121,7 +117,6 @@ writeFileSync(
 			access: REPO_ACCESS,
 			installAll: {
 				apm: REPO_ACCESS === "ssh" ? `apm install git@${host}:${repo}.git` : `apm install ${apmRef}`,
-				...(isGitHub && { gh: `gh skill install ${repo} --all` }),
 			},
 			skills,
 		},

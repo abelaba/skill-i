@@ -1,17 +1,6 @@
 ---
 name: curate-commits
-description: >-
-  Restructure a messy feature branch into a small sequence of clean,
-  logically-grouped commits that a reviewer can step through one at a time.
-  Use whenever someone wants to clean up, squash, reorganize, tidy, or rewrite
-  commit history before opening or updating a pull request, make a branch
-  reviewable commit-by-commit, turn a pile of "wip" / "fix typo" / "address
-  review" commits into coherent commits, or make history bisectable — even if
-  they don't literally say "squash". It works by repartitioning the net diff
-  against the base branch into hunk-level logical commits (NOT by squashing the
-  original commits), so wip/revert noise disappears entirely. Do NOT use this
-  for resolving merge conflicts, for writing a single commit message, or for
-  ordinary committing of current work.
+description: Restructure a messy feature branch into a small sequence of clean, logically-grouped commits that a reviewer can step through one at a time. Use whenever someone wants to clean up, squash, reorganize, tidy, or rewrite commit history before opening or updating a pull request, make a branch reviewable commit-by-commit, turn a pile of "wip" / "fix typo" / "address review" commits into coherent commits, or make history bisectable — even if they don't literally say "squash". It works by repartitioning the net diff against the base branch into hunk-level logical commits (NOT by squashing the original commits), so wip/revert noise disappears entirely. Do NOT use this for resolving merge conflicts, for writing a single commit message, or for ordinary committing of current work.
 ---
 
 # curate-commits

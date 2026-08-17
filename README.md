@@ -3,19 +3,17 @@
 A template for publishing an organization's agent skills as a browsable,
 searchable website with one-line install commands. Skills install on Claude
 Code, GitHub Copilot, Cursor, and other harnesses via
-[APM](https://microsoft.github.io/apm/) or, on GitHub-hosted repos, the
-[GitHub CLI](https://cli.github.com/manual/gh_skill_install).
+[APM](https://microsoft.github.io/apm/).
 
 The website lists every skill with a search filter and copyable install
 commands, and deploys to GitHub Pages or GitLab Pages on every push to the
 default branch. Skills live in this repository as directories under the
 configured skills folder (default `skills/`).
 
-The template is host-agnostic: the build detects the git host and repo slug
-from the CI environment (GitHub Actions or GitLab CI) or the `origin` remote,
+The template is host-agnostic: the build takes the git host and repo slug
+from the CI environment (GitHub Actions or GitLab CI) or explicit variables,
 and generates matching install commands and source links. On non-GitHub hosts
-APM commands use the fully qualified form (`host/owner/repo`) and the GitHub
-CLI option is hidden.
+APM commands use the fully qualified form (`host/owner/repo`).
 
 ## Setting up your own index
 
@@ -44,11 +42,10 @@ CLI option is hidden.
 On github.com and gitlab.com (or self-managed GitLab CI) the defaults are
 correct without setting anything: the build reads the variables the CI
 platform itself provides. Set the overrides when the guess would be wrong,
-e.g. `GIT_PLATFORM: github` on GitHub Enterprise so gh CLI commands appear.
-The platform flavor controls whether gh CLI commands are offered and which
-source-link layout is used. Keep the skills folder named
-`skills` (or `.apm/skills`) if you want the install-everything commands to
-work: both APM and the GitHub CLI discover skills by that convention.
+e.g. `GIT_PLATFORM: gitlab` on a self-hosted GitLab whose hostname does not
+contain "gitlab". The platform flavor controls the source-link layout. Keep
+the skills folder named `skills` (or `.apm/skills`) if you want the
+install-everything command to work: APM discovers skills by that convention.
 
 ## Adding a skill
 
@@ -70,28 +67,21 @@ The `skill-authoring` example skill documents the conventions in detail.
 
 ## Installing skills from an index
 
-The website offers both commands behind a toggle. Directly:
-
 ```sh
-# APM on GitHub: the whole index, or one skill
+# On GitHub: the whole index, or one skill
 apm install <owner>/<repo>
 apm install <owner>/<repo>/skills/<skill-name>
 
-# APM on any other host (GitLab, self-hosted): fully qualified form
+# On any other host (GitLab, self-hosted): fully qualified form
 apm install <host>/<owner>/<repo>
 apm install <host>/<owner>/<repo>/skills/<skill-name>
-
-# GitHub CLI (GitHub-hosted repos only): all skills, or one skill
-gh skill install <owner>/<repo> --all
-gh skill install <owner>/<repo> skills/<skill-name>
 ```
 
 With `REPO_ACCESS: ssh` the website shows SSH forms instead (for private
 repos accessed by SSH key): install-everything becomes
 `apm install git@<host>:<owner>/<repo>.git`, and single skills become an
 `apm.yml` dependencies snippet, since APM does not accept subpaths inside git
-URLs. The configured connection type is displayed next to the toggles. gh CLI
-commands are unaffected; the GitHub CLI authenticates through `gh auth`.
+URLs. The configured connection type is displayed on the website.
 
 ## Continuous integration
 

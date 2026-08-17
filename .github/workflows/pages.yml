@@ -14,7 +14,7 @@ env:
   # Optional overrides; by default host and slug come from the CI platform.
   # REPO_HOST: github.com
   # REPO_SLUG: owner/repo
-  # GIT_PLATFORM: github   # github | gitlab | other; set for GitHub Enterprise
+  # GIT_PLATFORM: github   # github | gitlab | other; controls source links
   # REPO_ACCESS: https     # https | ssh; how consumers reach this repo
 
 permissions:
