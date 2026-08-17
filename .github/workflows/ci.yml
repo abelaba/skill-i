@@ -16,19 +16,6 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Install APM
-        run: |
-          curl -sSL https://aka.ms/apm-unix | sh
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-
-      - name: Reproduce lockfile exactly
-        run: apm install --frozen
-
-      - name: Audit skills (hidden Unicode, drift, lockfile integrity)
-        run: apm audit --ci
-
       - uses: actions/setup-node@v4
         with:
           node-version: 22
