@@ -12,11 +12,11 @@ variables:
   # REPO_ACCESS: https     # https | ssh; how consumers reach this repo
 
 pages:
-  image: node:22
+  image: python:3.12-slim
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
   script:
-    - node scripts/build-site.mjs
+    - python3 scripts/build-site.py
     - mv _site public
   artifacts:
     paths:

@@ -92,17 +92,17 @@ same with GitLab Pages on the default branch.
 ```
 skills/<name>/SKILL.md        The skills (folder configurable via SKILLS_DIR)
 site/                         Static website source (single file, no dependencies)
-scripts/build-site.mjs        Generates _site/ (site + skills.json) from the skills
+scripts/build-site.py         Generates _site/ (site + skills.json) from the skills
 .github/workflows/pages.yml   Builds and deploys the site to GitHub Pages
 .gitlab-ci.yml                Builds and publishes the site with GitLab Pages
 ```
 
 ## Working on the website
 
-Build and preview locally (no dependencies beyond Node):
+Build and preview locally (no dependencies beyond Python 3):
 
 ```sh
-node scripts/build-site.mjs
+python3 scripts/build-site.py
 python3 -m http.server -d _site 8000
 ```
 
@@ -110,7 +110,7 @@ Outside CI the install commands show an `OWNER/REPO` placeholder; pass the
 configuration explicitly for a faithful preview:
 
 ```sh
-REPO_SLUG=acme/skills SKILLS_DIR=skills node scripts/build-site.mjs
+REPO_SLUG=acme/skills SKILLS_DIR=skills python3 scripts/build-site.py
 ```
 
 Then open http://localhost:8000. The build only reads the skill files, so it
