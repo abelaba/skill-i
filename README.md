@@ -39,7 +39,6 @@ CLI option is hidden.
 | Repository slug | `REPO_SLUG` (e.g. `owner/repo`) | from the CI platform |
 | Platform flavor | `GIT_PLATFORM`: `github`, `gitlab`, or `other` | guessed from the host |
 | Repo access | `REPO_ACCESS`: `https` or `ssh` | `https` |
-| Package name and author | `apm.yml` | template values |
 | Color palette | CSS custom properties at the top of `site/index.html` | brand palette |
 
 On github.com and gitlab.com (or self-managed GitLab CI) the defaults are
@@ -96,13 +95,8 @@ commands are unaffected; the GitHub CLI authenticates through `gh auth`.
 
 ## Continuous integration
 
-`.github/workflows/ci.yml` runs on every pull request:
-
-- `apm install --frozen` reproduces the lockfile exactly, catching
-  manifest/lockfile drift.
-- `apm audit --ci` scans for hidden Unicode, content drift, and lockfile
-  integrity.
-- `node scripts/build-site.mjs` fails the build on broken skill files.
+`.github/workflows/ci.yml` runs on every pull request and builds the website
+index, failing on broken skill files.
 
 `.github/workflows/pages.yml` builds and deploys the website on pushes to
 `main`.
