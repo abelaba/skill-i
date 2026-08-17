@@ -2,7 +2,7 @@
 """Builds the static site into _site/: copies site/ and generates skills.json
 from the SKILL.md files in the skills folder.
 
-Requires python-frontmatter (pip install -r requirements.txt).
+Requires PyYAML (pip install -r requirements.txt).
 
 Template configuration, set in .github/workflows/pages.yml or .gitlab-ci.yml:
   SKILLS_DIR:   repo-relative folder that contains the skill directories.
@@ -23,7 +23,7 @@ import re
 import shutil
 from pathlib import Path
 
-import frontmatter
+import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT_DIR = ROOT / "_site"
@@ -54,6 +54,16 @@ def resolve_repo():
             "repo": os.environ["CI_PROJECT_PATH"],
         }
     return FALLBACK
+
+
+def parse_frontmatter(text):
+    """Splits a leading --- delimited frontmatter block off `text` and
+    parses it as YAML. Returns (attrs, body)."""
+    m = re.match(r"^---\r?\n(.*?)\r?\n---\r?\n?", text, re.DOTALL)
+    if not m:
+        return {}, text
+    attrs = yaml.safe_load(m.group(1))
+    return (attrs if isinstance(attrs, dict) else {}), text[m.end():]
 
 
 def first_paragraph(markdown):
@@ -87,11 +97,11 @@ def main():
             skill_file = entry / "SKILL.md"
             if not entry.is_dir() or not skill_file.is_file():
                 continue
-            post = frontmatter.loads(skill_file.read_text(encoding="utf-8"))
+            attrs, body = parse_frontmatter(skill_file.read_text(encoding="utf-8"))
             skills.append(
                 {
-                    "name": str(post.get("name") or entry.name),
-                    "description": str(post.get("description") or first_paragraph(post.content)),
+                    "name": str(attrs.get("name") or entry.name),
+                    "description": str(attrs.get("description") or first_paragraph(body)),
                     "install": {
                         # Single skills over SSH need the apm.yml object form; this
                         # snippet goes under dependencies.apm, followed by `apm install`.

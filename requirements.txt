@@ -1,1 +1,1 @@
-python-frontmatter>=1.1
+PyYAML>=6
