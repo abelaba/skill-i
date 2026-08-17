@@ -1,22 +1,15 @@
-# GitLab CI equivalent of the GitHub workflows: validates skills on merge
-# requests and publishes the website with GitLab Pages on the default branch.
+# GitLab CI equivalent of .github/workflows/pages.yml: builds the website and
+# publishes it with GitLab Pages on every push to the default branch.
 
-# Template configuration (keep in sync with .github/workflows/*.yml)
+# Template configuration (keep in sync with .github/workflows/pages.yml)
 variables:
   SKILLS_DIR: skills
   SITE_TITLE: Skill Index
   # Optional overrides; by default host and slug come from the CI platform.
   # REPO_HOST: gitlab.example.com
   # REPO_SLUG: owner/repo
-  # GIT_PLATFORM: gitlab   # github | gitlab | other
+  # GIT_PLATFORM: gitlab   # github | gitlab | other; controls source links
   # REPO_ACCESS: https     # https | ssh; how consumers reach this repo
-
-validate:
-  image: node:22
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-  script:
-    - node scripts/build-site.mjs
 
 pages:
   image: node:22

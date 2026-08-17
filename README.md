@@ -31,7 +31,7 @@ APM commands use the fully qualified form (`host/owner/repo`).
 
 | Setting | Where | Default |
 | --- | --- | --- |
-| Skills folder | `SKILLS_DIR` in `.github/workflows/*.yml` and `.gitlab-ci.yml` | `skills` |
+| Skills folder | `SKILLS_DIR` in `.github/workflows/pages.yml` and `.gitlab-ci.yml` | `skills` |
 | Site title | `SITE_TITLE` in `.github/workflows/pages.yml` and `.gitlab-ci.yml` | `Skill Index` |
 | Git host | `REPO_HOST` (e.g. `gitlab.example.com`) | from the CI platform |
 | Repository slug | `REPO_SLUG` (e.g. `owner/repo`) | from the CI platform |
@@ -60,8 +60,8 @@ install-everything command to work: APM discovers skills by that convention.
    ---
    ```
 
-3. Open a pull request. CI validates the skills; when it merges to `main`,
-   the website rebuilds and the skill appears in the index automatically.
+3. Open a pull request. When it merges to `main`, the website rebuilds and
+   the skill appears in the index automatically.
 
 ## Installing skills from an index
 
@@ -81,13 +81,11 @@ repos accessed by SSH key): install-everything becomes
 `apm.yml` dependencies snippet, since APM does not accept subpaths inside git
 URLs. The configured connection type is displayed on the website.
 
-## Continuous integration
+## Deployment
 
-`.github/workflows/ci.yml` runs on every pull request and builds the website
-index, failing on broken skill files.
-
-`.github/workflows/pages.yml` builds and deploys the website on pushes to
-`main`.
+`.github/workflows/pages.yml` builds and deploys the website to GitHub Pages
+on pushes to `main`. On GitLab, the `pages` job in `.gitlab-ci.yml` does the
+same with GitLab Pages on the default branch.
 
 ## Repository layout
 
@@ -96,8 +94,7 @@ skills/<name>/SKILL.md        The skills (folder configurable via SKILLS_DIR)
 site/                         Static website source (single file, no dependencies)
 scripts/build-site.mjs        Generates _site/ (site + skills.json) from the skills
 .github/workflows/pages.yml   Builds and deploys the site to GitHub Pages
-.github/workflows/ci.yml      Validates skills on pull requests (GitHub)
-.gitlab-ci.yml                Validates skills and publishes GitLab Pages (GitLab)
+.gitlab-ci.yml                Builds and publishes the site with GitLab Pages
 ```
 
 ## Working on the website
