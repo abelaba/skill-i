@@ -7,7 +7,7 @@ on:
 
 # Template configuration (keep in sync with pages.yml)
 env:
-  SKILLS_DIR: .apm/skills
+  SKILLS_DIR: skills
 
 permissions:
   contents: read
