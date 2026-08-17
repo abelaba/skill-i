@@ -95,30 +95,26 @@ def main():
         else f"https://{host}/{repo}/tree/main"
     )
 
+    def install_command(skill_path):
+        if REPO_ACCESS == "ssh":
+            # Single skills over SSH need the apm.yml object form; this
+            # snippet goes under dependencies.apm, followed by `apm install`.
+            dep = [{"git": f"git@{host}:{repo}.git", "path": skill_path}]
+            return yaml.safe_dump(dep, sort_keys=False, width=4096).rstrip()
+        return f"apm install {apm_ref}/{skill_path}"
+
     skills = []
-    skills_dir = ROOT / SKILLS_DIR
-    if skills_dir.is_dir():
-        for entry in skills_dir.iterdir():
-            skill_file = entry / "SKILL.md"
-            if not entry.is_dir() or not skill_file.is_file():
-                continue
-            attrs, body = parse_frontmatter(skill_file.read_text(encoding="utf-8"))
-            skills.append(
-                {
-                    "name": str(attrs.get("name") or entry.name),
-                    "description": str(attrs.get("description") or first_paragraph(body)),
-                    "install": {
-                        # Single skills over SSH need the apm.yml object form; this
-                        # snippet goes under dependencies.apm, followed by `apm install`.
-                        "apm": (
-                            f"- git: git@{host}:{repo}.git\n  path: {SKILLS_DIR}/{entry.name}"
-                            if REPO_ACCESS == "ssh"
-                            else f"apm install {apm_ref}/{SKILLS_DIR}/{entry.name}"
-                        ),
-                    },
-                    "source": f"{tree_base}/{SKILLS_DIR}/{entry.name}",
-                }
-            )
+    for skill_file in sorted((ROOT / SKILLS_DIR).glob("*/SKILL.md")):
+        name = skill_file.parent.name
+        attrs, body = parse_frontmatter(skill_file.read_text(encoding="utf-8"))
+        skills.append(
+            {
+                "name": str(attrs.get("name") or name),
+                "description": str(attrs.get("description") or first_paragraph(body)),
+                "install": {"apm": install_command(f"{SKILLS_DIR}/{name}")},
+                "source": f"{tree_base}/{SKILLS_DIR}/{name}",
+            }
+        )
 
     skills.sort(key=lambda s: s["name"])
 
